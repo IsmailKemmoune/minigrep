@@ -1,24 +1,47 @@
 use std::env;
 use std::fs;
-use std::io::Result;
+use std::io;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
 
-    let query = &args[1];
-    let filename = &args[2];
+    let config = Config::new(&args);
 
-    println!("query: {}, filename: {}", query, filename);
+    match config {
+        Ok(config) => {
+            println!("query: {}, filename: {}", config.query, config.filename);
+            let contents = read_file(&config.filename);
 
-    let contents = read_file(filename);
-
-    match contents {
-        Ok(contents) => println!("file content returned:\n{contents}"),
-        Err(err) => println!("Error while reading {}: {}", filename, err),
+            match contents {
+                Ok(contents) => println!("file content returned:\n{contents}"),
+                Err(err) => println!("Error while reading {}: {}", &config.filename, err),
+            }
+        }
+        Err(err) => println!("Error while parsing arguments: {}", err),
     }
 }
 
-fn read_file(file_name: &str) -> Result<String> {
+struct Config {
+    query: String,
+    filename: String,
+}
+
+impl Config {
+    fn new(args: &[String]) -> Result<Config, &str> {
+        if args.len() < 3 {
+            return Err("Not enough arguments, please provide a query and a filename");
+        }
+
+        let config = Config {
+            query: args[1].clone(),
+            filename: args[2].clone(),
+        };
+
+        Ok(config)
+    }
+}
+
+fn read_file(file_name: &str) -> io::Result<String> {
     let contents = fs::read_to_string(file_name)?;
 
     Ok(contents)

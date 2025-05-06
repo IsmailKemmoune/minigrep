@@ -1,9 +1,10 @@
 use std::error::Error;
-use std::fs;
+use std::{env, fs};
 
 pub struct Config {
     pub query: String,
     pub filename: String,
+    pub case_sensitive: bool,
 }
 
 impl Config {
@@ -12,9 +13,12 @@ impl Config {
             return Err("Not enough arguments, please provide a query and a filename");
         }
 
+        let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
+
         let config = Config {
             query: args[1].clone(),
             filename: args[2].clone(),
+            case_sensitive,
         };
 
         Ok(config)
@@ -24,7 +28,13 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
-    for line in search(&config.query, &contents) {
+    let results = if config.case_sensitive {
+        search(&config.query, &contents)
+    } else {
+        search_case_insensitive(&config.query, &contents)
+    };
+
+    for line in results {
         println!("{line}")
     }
 
@@ -35,11 +45,23 @@ pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let mut result = Vec::new();
 
     for line in contents.lines() {
+        if line.contains(query) {
+            result.push(line.trim());
+        }
+    }
+
+    result
+}
+
+pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+    let mut result = Vec::new();
+
+    for line in contents.lines() {
         if line.to_lowercase().contains(&query.to_lowercase()) {
             result.push(line.trim());
         }
     }
-    
+
     result
 }
 
@@ -56,7 +78,7 @@ mod tests {
         Pick three.
         Duct tape";
 
-        assert_eq!(vec!["safe, fast, productive.", "Duct tape"], search(query, contents))
+        assert_eq!(vec!["safe, fast, productive."], search(query, contents))
     }
 
     #[test]
@@ -68,6 +90,6 @@ mod tests {
         Pick three.
         Duct tape";
 
-        assert_eq!(vec!["Rust:"], search(query, contents))
+        assert_eq!(vec!["Rust:"], search_case_insensitive(query, contents))
     }
 }

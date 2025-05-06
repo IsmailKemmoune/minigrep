@@ -10,8 +10,8 @@ fn main() {
         Ok(config) => {
             println!("query: {}, filename: {}", config.query, config.filename);
 
-            match  run(config) {
-                Ok(()) => {},
+            match run(config) {
+                Ok(()) => {}
                 Err(err) => println!("Error while reading the file: {}", err),
             }
         }

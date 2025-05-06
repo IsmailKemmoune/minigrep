@@ -1,4 +1,4 @@
-use minigrep::{read_file, Config};
+use minigrep::{run, Config};
 use std::env;
 
 fn main() {
@@ -9,11 +9,10 @@ fn main() {
     match config {
         Ok(config) => {
             println!("query: {}, filename: {}", config.query, config.filename);
-            let contents = read_file(&config.filename);
 
-            match contents {
-                Ok(contents) => println!("file content returned:\n{contents}"),
-                Err(err) => println!("Error while reading {}: {}", &config.filename, err),
+            match  run(config) {
+                Ok(()) => {},
+                Err(err) => println!("Error while reading the file: {}", err),
             }
         }
         Err(err) => println!("Error while parsing arguments: {}", err),
